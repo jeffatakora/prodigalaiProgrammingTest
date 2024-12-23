@@ -1,0 +1,92 @@
+{
+    "modules": [
+        {
+            "id": "m1",
+            "title": "Basic Speech Course",
+            "description": "Learn fundamental speech patterns and pronunciation",
+            "imageUrl": "/Users/jeff/FlutterProjects/flutter_developer_test_assignment/task2/dynamic_module_rendering_app/assets/pngs/speech_course.png",
+            "cakes": [
+                {
+                    "id": "c1",
+                    "type": "text",
+                    "title": "Introduction to Phonetics",
+                    "content": "Learn about basic phonetic sounds in English",
+                    "task": "Read and understand the following phonetic symbols: /æ/, /ə/, /ŋ/",
+                    "userInput": true
+                },
+                {
+                    "id": "c2",
+                    "type": "audio",
+                    "title": "Basic Pronunciation",
+                    "content": "Listen and repeat the following words",
+                    "audioUrl": "/audio/basic_words.mp3",
+                    "requiresRecording": true
+                },
+                {
+                    "id": "c3",
+                    "type": "audio",
+                    "title": "Basic Pronunciation",
+                    "content": "Listen and repeat the following words",
+                    "audioUrl": "/audio/basic_words_2.mp3",
+                    "requiresRecording": false
+                }
+            ]
+        },
+        {
+            "id": "m2",
+            "title": "Basic Grammar Course",
+            "description": "Master essential grammar concepts",
+            "imageUrl": "/Users/jeff/FlutterProjects/flutter_developer_test_assignment/task2/dynamic_module_rendering_app/assets/pngs/grammar_course.png",
+            "cakes": [
+                {
+                    "id": "c3",
+                    "type": "text",
+                    "title": "Present Simple Tense",
+                    "content": "Understanding everyday actions and habits",
+                    "task": "Complete the sentences using the correct form of the verb",
+                    "userInput": true
+                },
+                {
+                    "id": "c4",
+                    "type": "image",
+                    "title": "Prepositions of Place",
+                    "content": "Learn how to describe positions of objects",
+                    "imageUrl": "/Users/jeff/FlutterProjects/flutter_developer_test_assignment/task2/dynamic_module_rendering_app/assets/pngs/prepositions.png",
+                    "task": "Describe the positions of objects in the image"
+                }
+            ]
+        },
+        {
+            "id": "m3",
+            "title": "Advanced Sentence Formation Course",
+            "description": "Develop skills to construct complex and compound sentences",
+            "imageUrl": "/Users/jeff/FlutterProjects/flutter_developer_test_assignment/task2/dynamic_module_rendering_app/assets/pngs/sentence_course.png",
+            "cakes": [
+                {
+                    "id": "c5",
+                    "type": "text",
+                    "title": "Compound Sentences",
+                    "content": "Learn how to form sentences using conjunctions (and, but, or).",
+                    "task": "Combine the following pairs of sentences into compound sentences.",
+                    "userInput": true
+                },
+                {
+                    "id": "c6",
+                    "type": "image",
+                    "title": "Complex Sentences with Clauses",
+                    "content": "Identify the main and subordinate clauses in the image.",
+                    "imageUrl": "/Users/jeff/FlutterProjects/flutter_developer_test_assignment/task2/dynamic_module_rendering_app/assets/pngs/complex_clauses.png",
+                    "task": "Point out and label the clauses in each sentence shown in the image."
+                },
+                {
+                    "id": "c7",
+                    "type": "audio",
+                    "title": "Intonation and Sentence Flow",
+                    "content": "Listen to examples of complex sentence structures and their intonation patterns.",
+                    "audioUrl": "/audio/intonation.mp3",
+                    "requiresRecording": false
+                }
+            ]
+        }
+    ]
+}

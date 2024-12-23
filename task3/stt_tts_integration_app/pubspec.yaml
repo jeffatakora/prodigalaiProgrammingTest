@@ -1,0 +1,39 @@
+name: stt_tts_integration_app
+description: Speech-to-Text and Text-to-Speech Integration
+# The following line prevents the package from being accidentally published to
+# pub.dev using `flutter pub publish`. This is preferred for private packages.
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.5.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  # text to speech plugin for recognition
+  flutter_tts: ^4.2.0
+  # speech to text plugin for transcribing
+  # speech_to_text: ^6.6.0
+  livespeechtotext: ^1.0.9
+  # For managing microphone permissions
+  permission_handler: ^11.3.1
+
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+ 
+# The following section is specific to Flutter packages.
+flutter:
+
+  uses-material-design: true
+
+  # To add assets to your application, add an assets section, like this:
+  assets:
+    - assets/pngs/
+
+  
