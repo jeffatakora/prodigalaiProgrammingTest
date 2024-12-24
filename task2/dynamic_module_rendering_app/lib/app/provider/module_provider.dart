@@ -21,7 +21,7 @@ class ModulesProvider with ChangeNotifier {
 
     try {
       final String response =
-          await rootBundle.loadString('/Users/jeff/FlutterProjects/flutter_developer_test_assignment/task2/dynamic_module_rendering_app/assets/json/modules.json');
+          await rootBundle.loadString('assets/json/modules.json');
       final data = json.decode(response);
 
       _modules = (data['modules'] as List)

@@ -16,10 +16,11 @@ dependencies:
   # text to speech plugin for recognition
   flutter_tts: ^4.2.0
   # speech to text plugin for transcribing
-  # speech_to_text: ^6.6.0
+  speech_to_text: ^7.0.0
   livespeechtotext: ^1.0.9
   # For managing microphone permissions
   permission_handler: ^11.3.1
+
 
 
 dev_dependencies:

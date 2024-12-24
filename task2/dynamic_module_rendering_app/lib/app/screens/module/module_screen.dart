@@ -1,5 +1,6 @@
 import 'package:dynamic_module_rendering_app/app/provider/module_provider.dart';
 import 'package:dynamic_module_rendering_app/app/screens/module/components/module_card.dart';
+import 'package:dynamic_module_rendering_app/app/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -11,15 +12,26 @@ class ModulesScreen extends StatefulWidget {
 }
 
 class _ModulesScreenState extends State<ModulesScreen> {
-
-@override
+  @override
   void initState() {
     super.initState();
+    _initializeServices();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<ModulesProvider>(context, listen: false).loadModules();
     });
   }
 
+  Future<void> _initializeServices() async {
+    // Initialize STT with permissions
+    bool permissionGranted = await Utils.requestMicrophonePermission();
+    if (!permissionGranted) {
+      Utils.showErrorDialog(
+          // ignore: use_build_context_synchronously
+          context,
+          'Permission Denied',
+          'Microphone permission is required.');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

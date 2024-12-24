@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1093618242912",
+    "project_id": "prodicalaitest",
+    "storage_bucket": "prodicalaitest.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1093618242912:android:1650634d83f1daf5353a05",
+        "android_client_info": {
+          "package_name": "com.prodigalai.voiceroom.com.multi_user_voice_room"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDrHf0IjP4u4KFW9l6cU_AmuHJuaRuxXIM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

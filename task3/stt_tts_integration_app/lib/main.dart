@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:stt_tts_integration_app/app/home.dart';
 
+/// Entry point of the application.
 void main() {
   runApp(const MyApp());
 }
 
+/// The root widget of the application.
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
+  /// Builds the application widget tree.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(

@@ -1,9 +1,14 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:stt_tts_integration_app/app/utils/app_colors.dart';
 import 'package:stt_tts_integration_app/app/utils/utils.dart';
 import 'package:stt_tts_integration_app/app/widgets/circular_button.dart';
+import 'package:stt_tts_integration_app/app/widgets/custom_text.dart';
 import 'package:stt_tts_integration_app/app/widgets/slide_control.dart';
 
+/// Screen for converting entered text to speech.
 class TextToSpeechScreen extends StatefulWidget {
   const TextToSpeechScreen({super.key});
 
@@ -18,14 +23,16 @@ class _TextToSpeechScreenState extends State<TextToSpeechScreen> {
   double _pitch = 0.5;
   double _volume = 0.5;
 
+  /// Initializes Text-to-Speech (TTS) settings on screen load.
   @override
   void initState() {
     super.initState();
     _initTts();
   }
 
+  /// Initializes TTS properties like language, rate, pitch, and volume.
   Future<void> _initTts() async {
-    await flutterTts.setLanguage('en-US');
+    // await flutterTts.setLanguage('en-US');
     await flutterTts.setSpeechRate(_speed);
     await flutterTts.setPitch(_pitch);
     await flutterTts.setVolume(_volume);
@@ -36,18 +43,32 @@ class _TextToSpeechScreenState extends State<TextToSpeechScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF1E1E1E),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(20.0),
           child: Column(
-            // crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Text to Speech',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
+              // Header with navigation and screen title
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      icon: Icon(
+                        Platform.isIOS
+                            ? Icons.arrow_back_ios
+                            : Icons.arrow_back,
+                        color: AppColors.kWhite,
+                      )),
+                  const CustomText(
+                    text: 'Text to Speech',
+                    txtColor: Colors.white,
+                    font: 24,
+                    fntweight: FontWeight.bold,
+                  ),
+                  const SizedBox()
+                ],
               ),
               const SizedBox(height: 20),
               Container(
@@ -59,11 +80,12 @@ class _TextToSpeechScreenState extends State<TextToSpeechScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Enter your text:',
-                      style: TextStyle(color: Colors.white70),
+                    const CustomText(
+                      text: 'Enter your text:',
+                      txtColor: Colors.white70,
                     ),
                     const SizedBox(height: 10),
+                    // Input area for text to convert to speech
                     TextField(
                       controller: _textController,
                       style: const TextStyle(color: Colors.white),
@@ -75,6 +97,7 @@ class _TextToSpeechScreenState extends State<TextToSpeechScreen> {
                       ),
                     ),
                     const SizedBox(height: 10),
+                    // Clear button for text field
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
@@ -91,6 +114,7 @@ class _TextToSpeechScreenState extends State<TextToSpeechScreen> {
                 ),
               ),
               const SizedBox(height: 20),
+              // Control sliders for speech parameters
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -136,6 +160,7 @@ class _TextToSpeechScreenState extends State<TextToSpeechScreen> {
                 ),
               ),
               const SizedBox(height: 20),
+              // Play button to start speech
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -144,7 +169,7 @@ class _TextToSpeechScreenState extends State<TextToSpeechScreen> {
                       Utils.showErrorDialog(context, 'Error',
                           'Please enter a text in the field.');
                     } else {
-                      await flutterTts.speak(_textController.text);
+                      await flutterTts.speak(_textController.text, focus: true);
                     }
                   },
                   style: ElevatedButton.styleFrom(
@@ -154,12 +179,10 @@ class _TextToSpeechScreenState extends State<TextToSpeechScreen> {
                       borderRadius: BorderRadius.circular(25),
                     ),
                   ),
-                  child: const Text(
-                    'Play',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                    ),
+                  child: const CustomText(
+                    text: 'Play',
+                    txtColor: Colors.white,
+                    font: 16,
                   ),
                 ),
               ),
@@ -170,6 +193,7 @@ class _TextToSpeechScreenState extends State<TextToSpeechScreen> {
     );
   }
 
+  /// Cleans up resources used for text-to-speech on dispose.
   @override
   void dispose() {
     _textController.dispose();

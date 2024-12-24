@@ -1,37 +1,65 @@
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class AgoraService {
-  static const String appId = '5c86532fff8e4ab2a918a183946a8adc';
-  static const String channelName = 'default_channel';
-
   RtcEngine? _engine;
-  bool _isInitialized = false;
+  bool _isMuted = false;
+  final Function(int, bool) onUserSpeaking;
+
+  AgoraService({required this.onUserSpeaking});
 
   Future<void> initialize() async {
-    if (_isInitialized) return;
-
+    // Request microphone permission
     await Permission.microphone.request();
 
+    // Create RTC engine instance
     _engine = createAgoraRtcEngine();
-    await _engine!.initialize(const RtcEngineContext(appId: appId));
+    await _engine!.initialize(RtcEngineContext(
+      appId: dotenv.env['AGORA_APP_ID']!,
+    ));
 
-    await _engine!.enableAudio();
-    await _engine!.setChannelProfile(
-      ChannelProfileType.channelProfileLiveBroadcasting,
+    // Enable audio volume indication
+    await _engine!.enableAudioVolumeIndication(
+      interval: 250,
+      smooth: 3,
+      reportVad: true,
     );
-    await _engine!.setClientRole(role: ClientRoleType.clientRoleBroadcaster);
 
-    _isInitialized = true;
+    // Register event handlers
+    _engine!.registerEventHandler(RtcEngineEventHandler(
+      onJoinChannelSuccess: (connection, elapsed) {
+        //fetch user here
+        print("Local user joined channel ${connection.localUid}");
+      },
+      onUserJoined: (connection, remoteUid, elapsed) {
+        print("Remote user joined: $remoteUid");
+      },
+      onUserOffline: (connection, remoteUid, reason) {
+        print("Remote user left: $remoteUid");
+      },
+      onAudioVolumeIndication:
+          (connection, speakers, speakerNumber, totalVolume) {
+        print("Audio volume indication - Number of speakers: $speakerNumber");
+        for (var speaker in speakers) {
+          print("Speaker uid: ${speaker.uid}, volume: ${speaker.volume}");
+          if (speaker.uid != null && speaker.volume != null) {
+            onUserSpeaking(speaker.uid!, speaker.volume! > 5);
+          }
+        }
+      },
+    ));
   }
 
-  Future<void> joinChannel() async {
-    if (!_isInitialized) await initialize();
-
+  Future<void> joinChannel(String channelName, int uid) async {
+    await _engine?.setChannelProfile(
+      ChannelProfileType.channelProfileLiveBroadcasting,
+    );
+    await _engine?.setClientRole(role: ClientRoleType.clientRoleBroadcaster);
     await _engine?.joinChannel(
-      token: 'e5f9739e04cc4792b7457eb9a94631c1', // Use token in production
+      token: dotenv.env['AGORA_APP_TOKEN']!,
       channelId: channelName,
-      uid: 0,
+      uid: uid,
       options: const ChannelMediaOptions(),
     );
   }
@@ -40,12 +68,14 @@ class AgoraService {
     await _engine?.leaveChannel();
   }
 
-  Future<void> toggleMute(bool muted) async {
-    await _engine?.muteLocalAudioStream(muted);
+  Future<void> toggleMute() async {
+    _isMuted = !_isMuted;
+    await _engine?.muteLocalAudioStream(_isMuted);
   }
 
+  bool get isMuted => _isMuted;
+
   void dispose() {
-    // _engine?.dispose();
-    _isInitialized = false;
+    _engine?.disableAudio();
   }
 }

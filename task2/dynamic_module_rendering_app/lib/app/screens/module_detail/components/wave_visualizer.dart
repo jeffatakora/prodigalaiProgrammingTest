@@ -111,13 +111,13 @@ class WaveVisualizer extends StatelessWidget {
 
 class VisualComponent extends StatefulWidget {
   const VisualComponent({
-    Key? key,
+    super.key,
     required this.duration,
     required this.color,
     required this.height,
     required this.width,
     this.initialHeight,
-  }) : super(key: key);
+  });
 
   final int duration;
   final Color color;

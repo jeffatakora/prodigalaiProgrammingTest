@@ -4,7 +4,7 @@
             "id": "m1",
             "title": "Basic Speech Course",
             "description": "Learn fundamental speech patterns and pronunciation",
-            "imageUrl": "/Users/jeff/FlutterProjects/flutter_developer_test_assignment/task2/dynamic_module_rendering_app/assets/pngs/speech_course.png",
+            "imageUrl": "assets/pngs/speech_course.png",
             "cakes": [
                 {
                     "id": "c1",
@@ -19,7 +19,7 @@
                     "type": "audio",
                     "title": "Basic Pronunciation",
                     "content": "Listen and repeat the following words",
-                    "audioUrl": "/audio/basic_words.mp3",
+                    "audioUrl": "audio/basic_words.mp3",
                     "requiresRecording": true
                 },
                 {
@@ -27,7 +27,7 @@
                     "type": "audio",
                     "title": "Basic Pronunciation",
                     "content": "Listen and repeat the following words",
-                    "audioUrl": "/audio/basic_words_2.mp3",
+                    "audioUrl": "audio/basic_words_2.mp3",
                     "requiresRecording": false
                 }
             ]
@@ -36,14 +36,14 @@
             "id": "m2",
             "title": "Basic Grammar Course",
             "description": "Master essential grammar concepts",
-            "imageUrl": "/Users/jeff/FlutterProjects/flutter_developer_test_assignment/task2/dynamic_module_rendering_app/assets/pngs/grammar_course.png",
+            "imageUrl": "assets/pngs/grammar_course.png",
             "cakes": [
                 {
                     "id": "c3",
                     "type": "text",
                     "title": "Present Simple Tense",
                     "content": "Understanding everyday actions and habits",
-                    "task": "Complete the sentences using the correct form of the verb",
+                    "task": "Complete the sentences using the correct form of the verb:\n1.go\n2.stand",
                     "userInput": true
                 },
                 {
@@ -51,7 +51,7 @@
                     "type": "image",
                     "title": "Prepositions of Place",
                     "content": "Learn how to describe positions of objects",
-                    "imageUrl": "/Users/jeff/FlutterProjects/flutter_developer_test_assignment/task2/dynamic_module_rendering_app/assets/pngs/prepositions.png",
+                    "imageUrl": "assets/pngs/prepositions.png",
                     "task": "Describe the positions of objects in the image"
                 }
             ]
@@ -60,14 +60,14 @@
             "id": "m3",
             "title": "Advanced Sentence Formation Course",
             "description": "Develop skills to construct complex and compound sentences",
-            "imageUrl": "/Users/jeff/FlutterProjects/flutter_developer_test_assignment/task2/dynamic_module_rendering_app/assets/pngs/sentence_course.png",
+            "imageUrl": "assets/pngs/sentence_course.png",
             "cakes": [
                 {
                     "id": "c5",
                     "type": "text",
                     "title": "Compound Sentences",
                     "content": "Learn how to form sentences using conjunctions (and, but, or).",
-                    "task": "Combine the following pairs of sentences into compound sentences.",
+                    "task": "Combine the following pairs of sentences into compound sentences.\n\n1.I love reading books.\n2.I don't have much time for it.",
                     "userInput": true
                 },
                 {
@@ -75,15 +75,15 @@
                     "type": "image",
                     "title": "Complex Sentences with Clauses",
                     "content": "Identify the main and subordinate clauses in the image.",
-                    "imageUrl": "/Users/jeff/FlutterProjects/flutter_developer_test_assignment/task2/dynamic_module_rendering_app/assets/pngs/complex_clauses.png",
+                    "imageUrl": "assets/pngs/complex_clauses.png",
                     "task": "Point out and label the clauses in each sentence shown in the image."
                 },
                 {
                     "id": "c7",
                     "type": "audio",
                     "title": "Intonation and Sentence Flow",
-                    "content": "Listen to examples of complex sentence structures and their intonation patterns.",
-                    "audioUrl": "/audio/intonation.mp3",
+                    "content": "Listen to examples of complex sentence structures and their intonation patterns.\n\n“Ladies and Gentlemen, (↘) / there are several considerations (↗)/that we need to take into account. (↘)/”",
+                    "audioUrl": "audio/intonation.mp3",
                     "requiresRecording": false
                 }
             ]
