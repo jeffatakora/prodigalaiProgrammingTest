@@ -37,6 +37,8 @@ dependencies:
   cupertino_icons: ^1.0.8
   # provides building blocks for you to add real-time voice and video communications through a simple and powerful SDK
   agora_rtc_engine: ^6.2.6
+  # to create Agora WebRTC access tokens.
+  agora_token_service: ^0.1.2
   # request permissions and check their status. You can also open the device's app settings so users can grant permission.
   permission_handler: ^11.3.1
   # A wrapper around InheritedWidget to make them easier to use and more reusable.

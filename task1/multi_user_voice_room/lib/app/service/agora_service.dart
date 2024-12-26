@@ -1,4 +1,5 @@
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
+import 'package:agora_token_service/agora_token_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -6,6 +7,8 @@ class AgoraService {
   RtcEngine? _engine;
   bool _isMuted = false;
   final Function(int, bool) onUserSpeaking;
+  final expirationInSeconds = 3600;
+  final currentTimestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
   AgoraService({required this.onUserSpeaking});
 
@@ -25,10 +28,12 @@ class AgoraService {
       smooth: 3,
       reportVad: true,
     );
+
+    _setupAgoraEventHandlers();
   }
 
   void _setupAgoraEventHandlers() {
-      // Register event handlers
+    // Register event handlers
     _engine!.registerEventHandler(RtcEngineEventHandler(
       onJoinChannelSuccess: (connection, elapsed) {
         //fetch user here
@@ -54,12 +59,21 @@ class AgoraService {
   }
 
   Future<void> joinChannel(String channelName, int uid) async {
+    final expireTimestamp = currentTimestamp + expirationInSeconds;
     await _engine?.setChannelProfile(
       ChannelProfileType.channelProfileLiveBroadcasting,
     );
     await _engine?.setClientRole(role: ClientRoleType.clientRoleBroadcaster);
+    final token = RtcTokenBuilder.build(
+      appId: dotenv.env['AGORA_APP_ID']!,
+      appCertificate: dotenv.env['AGORA_APP_CERT']!,
+      channelName: channelName,
+      uid: uid.toString(),
+      role: RtcRole.publisher,
+      expireTimestamp: expireTimestamp,
+    );
     await _engine?.joinChannel(
-      token: dotenv.env['AGORA_APP_TOKEN']!,
+      token: token,
       channelId: channelName,
       uid: uid,
       options: const ChannelMediaOptions(),
