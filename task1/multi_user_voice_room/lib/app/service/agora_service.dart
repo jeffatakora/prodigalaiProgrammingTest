@@ -25,8 +25,10 @@ class AgoraService {
       smooth: 3,
       reportVad: true,
     );
+  }
 
-    // Register event handlers
+  void _setupAgoraEventHandlers() {
+      // Register event handlers
     _engine!.registerEventHandler(RtcEngineEventHandler(
       onJoinChannelSuccess: (connection, elapsed) {
         //fetch user here

@@ -1,6 +1,7 @@
 import 'package:dynamic_module_rendering_app/app/model/cake.dart';
 import 'package:flutter/material.dart';
 
+/// A widget that displays an image cake with a title, content, and an optional task description.
 class ImageCakeWidget extends StatelessWidget {
   final Cake cake;
 
@@ -15,19 +16,23 @@ class ImageCakeWidget extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            /// Displays the title of the cake.
             Text(
               cake.title,
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 8),
+             /// Displays the content of the cake.
             Text(cake.content),
             const SizedBox(height: 16),
+            /// Displays the image associated with the cake.
             if (cake.imageUrl != null)
               Image.asset(
                 cake.imageUrl!,
                 fit: BoxFit.cover,
                 width: double.infinity,
               ),
+              /// Optionally displays a task description if provided.
             if (cake.task != null) ...[
               const SizedBox(height: 16),
               Text(

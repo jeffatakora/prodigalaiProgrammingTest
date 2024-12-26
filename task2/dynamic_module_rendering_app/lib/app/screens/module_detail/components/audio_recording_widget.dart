@@ -8,6 +8,8 @@ import 'package:flutter_sound/public/flutter_sound_recorder.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+/// A stateful widget for recording audio, with controls to start/stop recording
+/// and play the recorded audio.
 class AudioRecorderWidget extends StatefulWidget {
   const AudioRecorderWidget({super.key});
 
@@ -29,6 +31,7 @@ class _AudioRecorderWidgetState extends State<AudioRecorderWidget> {
     _initializeAudioRecorder();
   }
 
+/// Initializes the audio recorder and requests microphone permissions.
   Future<void> _initializeAudioRecorder() async {
     final status = await Permission.microphone.request();
     if (status.isGranted) {
@@ -47,11 +50,14 @@ class _AudioRecorderWidgetState extends State<AudioRecorderWidget> {
     if (_audioRecorder.isRecording) {
       _audioRecorder.stopRecorder();
     }
+    _audioRecorder.stopRecorder();
     _audioRecorder.closeRecorder();
+    _audioPlayer.stop();
     _audioPlayer.dispose();
     super.dispose();
   }
 
+/// Starts audio recording and saves the recording path.
   void _startRecording() async {
     final dir = await getTemporaryDirectory();
     String path = Platform.isAndroid
@@ -66,6 +72,7 @@ class _AudioRecorderWidgetState extends State<AudioRecorderWidget> {
     });
   }
 
+/// Stops the audio recording.
   void _stopRecording() async {
     await _audioRecorder.stopRecorder();
     setState(() {
@@ -74,6 +81,7 @@ class _AudioRecorderWidgetState extends State<AudioRecorderWidget> {
     });
   }
 
+/// Plays the recorded audio.
   void _playRecordedAudio() async {
     if (_recordedAudioPath != null) {
       final file = File(_recordedAudioPath!);
@@ -98,6 +106,7 @@ class _AudioRecorderWidgetState extends State<AudioRecorderWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        /// Instructions for starting the recording.
         Text(
           'Start your recording',
           style: Theme.of(context).textTheme.bodySmall,
@@ -105,6 +114,7 @@ class _AudioRecorderWidgetState extends State<AudioRecorderWidget> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            /// Button to start/stop recording.
             IconButton(
               icon: Icon(
                 _isRecording ? Icons.stop : Icons.mic,
@@ -113,6 +123,7 @@ class _AudioRecorderWidgetState extends State<AudioRecorderWidget> {
               onPressed: _isRecording ? _stopRecording : _startRecording,
             ),
             if (_hasRecorded)
+            /// Button to play/pause recorded audio.
               IconButton(
                 icon: Icon(
                   _isPlaying ? Icons.pause : Icons.play_arrow,

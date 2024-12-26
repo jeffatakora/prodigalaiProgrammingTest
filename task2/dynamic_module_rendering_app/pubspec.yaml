@@ -41,6 +41,7 @@ dependencies:
   audioplayers: ^5.2.1
   # for recording audio
   flutter_sound: ^9.2.13
+  # determining the path for storage on local device
   path_provider: ^2.1.5
   # For managing microphone permissions
   permission_handler: ^11.3.1

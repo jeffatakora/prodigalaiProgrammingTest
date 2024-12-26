@@ -2,6 +2,8 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:dynamic_module_rendering_app/app/screens/module_detail/components/wave_visualizer.dart';
 import 'package:flutter/material.dart';
 
+/// A stateful widget that provides functionality to play an audio file from a given URL.
+/// Includes controls to play/pause audio and displays the remaining time.
 class AudioPlayerWidget extends StatefulWidget {
   final String audioUrl;
 
@@ -20,16 +22,22 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
   @override
   void initState() {
     super.initState();
+
+    /// Listens for audio duration changes.
     _audioPlayer.onDurationChanged.listen((duration) {
       setState(() {
         _audioDuration = duration;
       });
     });
+
+    /// Listens for position changes during playback.
     _audioPlayer.onPositionChanged.listen((position) {
       setState(() {
         _currentPosition = position;
       });
     });
+
+    /// Resets the playback state when the audio finishes.
     _audioPlayer.onPlayerComplete.listen((_) {
       setState(() {
         _isPlaying = false;
@@ -40,10 +48,12 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
 
   @override
   void dispose() {
-    _audioPlayer.dispose();
     super.dispose();
+    _audioPlayer.stop();
+    _audioPlayer.dispose();
   }
 
+  /// Toggles the play/pause state of the audio player.
   void _togglePlayPause() async {
     if (_isPlaying) {
       await _audioPlayer.pause();
@@ -55,6 +65,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
     });
   }
 
+  /// Formats a [Duration] object into a "mm:ss" string format.
   String _formatDuration(Duration duration) {
     String minutes = duration.inMinutes.toString().padLeft(2, '0');
     String seconds = (duration.inSeconds % 60).toString().padLeft(2, '0');
@@ -73,6 +84,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
           ),
           onPressed: _togglePlayPause,
         ),
+        /// A visualizer for the audio player
         Expanded(
           child: Stack(
             alignment: Alignment.centerLeft,
@@ -95,6 +107,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
           ),
         ),
         const SizedBox(width: 8),
+        /// Displays the remaining audio duration.
         Text(
           _formatDuration(_audioDuration - _currentPosition),
           style: Theme.of(context).textTheme.bodySmall,

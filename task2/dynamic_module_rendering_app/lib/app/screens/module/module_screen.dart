@@ -4,6 +4,7 @@ import 'package:dynamic_module_rendering_app/app/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+/// A screen displaying a list of all modules in a scrollable view.
 class ModulesScreen extends StatefulWidget {
   const ModulesScreen({super.key});
 

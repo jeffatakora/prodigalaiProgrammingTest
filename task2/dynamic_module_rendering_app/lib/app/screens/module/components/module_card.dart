@@ -2,9 +2,11 @@ import 'package:dynamic_module_rendering_app/app/model/module.dart';
 import 'package:dynamic_module_rendering_app/app/screens/module_detail/module_detail.dart';
 import 'package:flutter/material.dart';
 
+/// A widget representing a card for a single module in the UI.
 class ModuleCard extends StatelessWidget {
-  final Module module;
+  final Module module; // The module represented by this card.
 
+  /// Constructor to initialize the card with a module.
   const ModuleCard({super.key, required this.module});
 
   @override
@@ -15,6 +17,7 @@ class ModuleCard extends StatelessWidget {
         elevation: 4,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: InkWell(
+          // Navigates to the detailed view of the module when tapped.
           onTap: () => Navigator.of(context).push(
             MaterialPageRoute(
               builder: (ctx) => ModuleDetailScreen(module: module),
@@ -75,70 +78,3 @@ class ModuleCard extends StatelessWidget {
     );
   }
 }
-
-
-// class ModuleCard extends StatelessWidget {
-//   final Module module;
-
-//   const ModuleCard({required this.module, super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Card(
-//       elevation: 4,
-//       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-//       child: InkWell(
-//         onTap: () => Navigator.of(context).push(
-//           MaterialPageRoute(
-//             builder: (ctx) => ModuleDetailScreen(module: module),
-//           ),
-//         ),
-//         child: Row(
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: [
-//             // Module Image
-//             SizedBox(
-//               width: 100,
-//               height: 100,
-//               child: Image.asset(
-//                 module.imageUrl,
-//                 fit: BoxFit.cover,
-//                 errorBuilder: (context, error, stackTrace) {
-//                   // Fallback if the image fails to load
-//                   return const Icon(Icons.broken_image, size: 50);
-//                 },
-//               ),
-//             ),
-//             const SizedBox(width: 16),
-//             // Module Details
-//             Expanded(
-//               child: Padding(
-//                 padding: const EdgeInsets.symmetric(vertical: 8),
-//                 child: Column(
-//                   crossAxisAlignment: CrossAxisAlignment.start,
-//                   mainAxisSize: MainAxisSize
-//                       .min, // Prevents Column from expanding infinitely
-//                   children: [
-//                     Text(
-//                       module.title,
-//                       style: Theme.of(context).textTheme.titleMedium,
-//                       maxLines: 2,
-//                       overflow: TextOverflow.ellipsis,
-//                     ),
-//                     const SizedBox(height: 4),
-//                     Text(
-//                       module.description,
-//                       style: Theme.of(context).textTheme.bodySmall,
-//                       maxLines: 2,
-//                       overflow: TextOverflow.ellipsis,
-//                     ),
-//                   ],
-//                 ),
-//               ),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
