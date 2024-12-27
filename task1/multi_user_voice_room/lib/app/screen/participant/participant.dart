@@ -1,39 +1,33 @@
 import 'package:flutter/material.dart';
-import 'package:multi_user_voice_room/app/provider/room_provider.dart';
-import 'package:provider/provider.dart';
 
-class ParticipantList extends StatelessWidget {
-  const ParticipantList({super.key});
+class ParticipantTile extends StatelessWidget {
+  final String name;
+  final bool isSpeaking;
+  final bool isMuted;
+  final bool isBot;
+
+  const ParticipantTile({super.key, 
+    required this.name,
+    required this.isSpeaking,
+    required this.isMuted,
+    required this.isBot,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<RoomProvider>(
-      builder: (context, roomProvider, _) {
-        return ListView.builder(
-          padding: const EdgeInsets.all(8),
-          itemCount: roomProvider.participants.length,
-          itemBuilder: (context, index) {
-            final participant = roomProvider.participants[index];
-            return Card(
-              child: ListTile(
-                leading: CircleAvatar(
-                  child: Text(participant.username[0]),
-                ),
-                title: Text(participant.username),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (participant.isSpeaking)
-                      const Icon(Icons.volume_up, color: Colors.green),
-                    if (participant.isMuted)
-                      const Icon(Icons.mic_off, color: Colors.red),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
+    return ListTile(
+      leading: Icon(
+        isBot ? Icons.smart_toy : Icons.person,
+        color: isSpeaking ? Colors.green : Colors.grey,
+      ),
+      title: Text(name),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (isSpeaking) const Icon(Icons.volume_up, color: Colors.green),
+          if (isMuted) const Icon(Icons.mic_off, color: Colors.red),
+        ],
+      ),
     );
   }
 }

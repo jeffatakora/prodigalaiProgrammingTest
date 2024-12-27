@@ -1,177 +1,170 @@
+import 'package:agora_rtc_engine/agora_rtc_engine.dart';
+import 'package:agora_token_service/agora_token_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:multi_user_voice_room/app/model/user.dart';
-import 'package:multi_user_voice_room/app/service/agora_service.dart';
-import 'package:multi_user_voice_room/app/service/auth_services.dart';
+import 'package:permission_handler/permission_handler.dart';
 
-class RoomProvider with ChangeNotifier {
+class RoomService with ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final String roomId;
-  AgoraService? _voiceService;
+  RtcEngine? _engine;
   List<UserModel> _participants = [];
-  bool _isInitialized = false;
-
-  // Bot user model
-  final UserModel _botUser = UserModel(
-    uid: 'bot-moderator-001',
-    username: 'Bot',
-    agoraId: generateAgoraId('bot-moderator-001'),
-    isMuted: true,
-    isSpeaking: false,
-  );
-
-  RoomProvider(this.roomId) {
-    _initializeRoom();
-  }
+  String? _currentRoomId;
+  final expirationInSeconds = 3600;
+  final currentTimestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
   List<UserModel> get participants => _participants;
-  bool get isInitialized => _isInitialized;
-  UserModel get botUser => _botUser;
 
-  Future<void> _initializeRoom() async {
-    try {
-      // Initialize voice service
-      _voiceService = AgoraService(
-        onUserSpeaking: _handleUserSpeaking,
-      );
-      await _voiceService!.initialize();
+  Future<void> initializeAgora() async {
+    // Request permissions
+    await [Permission.microphone].request();
+    
+    _engine = createAgoraRtcEngine();
+    await _engine!.initialize(RtcEngineContext(
+      appId: dotenv.env['AGORA_APP_ID']!,
+    ));
 
-      // Ensure bot exists in the room
-      await _ensureBotInRoom();
+    await _engine!.enableAudio();
+    await _engine!
+        .setChannelProfile(ChannelProfileType.channelProfileLiveBroadcasting);
+    await _engine!.setClientRole(role: ClientRoleType.clientRoleBroadcaster);
+    await _engine!.enableLocalAudio(true);
+    await _engine!.setAudioProfile(
+      profile: AudioProfileType.audioProfileDefault,
+      scenario: AudioScenarioType.audioScenarioChatroom,
+    );
+    _setupAgoraEventHandlers();
+  }
 
-      // Listen to participants collection
-      _firestore
-          .collection('rooms')
-          .doc(roomId)
-          .collection('participants')
-          .snapshots()
-          .listen((snapshot) {
-        // Get all participants except bot
-        final List<UserModel> regularParticipants = snapshot.docs
-            .where((doc) => doc.id != _botUser.uid)
-            .map((doc) => UserModel.fromMap(doc.data()))
-            .toList();
+  void _setupAgoraEventHandlers() {
+    _engine?.registerEventHandler(RtcEngineEventHandler(
+      onJoinChannelSuccess: (connection, elapsed) {
+        print("Local user joined");
+      },
+      onUserJoined: (connection, remoteUid, elapsed) async {
+        print("Remote user joined: $remoteUid");
+      },
+      onUserOffline: (connection, remoteUid, reason) {
+        print("Remote user left: $remoteUid");
+      },
+      onAudioVolumeIndication:
+          (connection, speakers, speakerNumber, totalVolume) {
+        for (var speaker in speakers) {
+          _updateUserSpeaking(speaker.uid!, speaker.volume! > 50);
+        }
+      },
+    ));
+  }
 
-        // Always add bot to the participants list
-        _participants = [_botUser, ...regularParticipants];
-        notifyListeners();
-      });
+  Future<void> _updateUserSpeaking(int agoraId, bool isSpeaking) async {
+    final participant = _participants.firstWhere(
+      (p) => p.agoraId == agoraId,
+      orElse: () => throw Exception('User not found'),
+    );
+    await updateUserSpeakingStatus(participant.uid, isSpeaking);
+  }
 
-      _isInitialized = true;
+  void _listenToParticipants(String roomId) {
+    _firestore
+        .collection('rooms')
+        .doc(roomId)
+        .collection('participants')
+        .snapshots()
+        .listen((snapshot) {
+      _participants =
+          snapshot.docs.map((doc) => UserModel.fromMap(doc.data())).toList();
       notifyListeners();
-    } catch (e) {
-      print('Error initializing room: $e');
-      rethrow;
+    });
+  }
+
+  Future<void> joinRoom(String roomId, UserModel user) async {
+    _currentRoomId = roomId;
+    final expireTimestamp = currentTimestamp + expirationInSeconds;
+    final token = RtcTokenBuilder.build(
+      appId: dotenv.env['AGORA_APP_ID']!,
+      appCertificate: dotenv.env['AGORA_APP_CERT']!,
+      channelName: roomId,
+      uid: user.agoraId.toString(),
+      role: RtcRole.publisher,
+      expireTimestamp: expireTimestamp,
+    );
+    await _engine?.joinChannel(
+      token: token,
+      channelId: roomId,
+      uid: user.agoraId,
+      options: const ChannelMediaOptions(
+        clientRoleType: ClientRoleType.clientRoleBroadcaster,
+        autoSubscribeAudio: true,
+      ),
+    );
+
+    await _firestore
+        .collection('rooms')
+        .doc(roomId)
+        .collection('participants')
+        .doc(user.uid)
+        .set(user.toMap());
+
+    await _updateUserStatus(user.uid, {'lastJoinedRoom': roomId});
+    _listenToParticipants(roomId);
+  }
+
+  Future<void> updateUserSpeakingStatus(String userId, bool isSpeaking) async {
+    await _firestore
+        .collection('rooms')
+        .doc(_currentRoomId)
+        .collection('participants')
+        .doc(userId)
+        .update({'isSpeaking': isSpeaking});
+  }
+
+Future<UserModel> toggleMute(UserModel user) async {
+    final isMuted = !user.isMuted;
+    await _engine?.muteLocalAudioStream(isMuted);
+    
+    // Update Firestore
+    await _firestore.collection('rooms')
+      .doc(_currentRoomId)
+      .collection('participants')
+      .doc(user.uid)
+      .update({'isMuted': isMuted});
+
+    // Update local user state
+    final updatedUser = UserModel(
+      uid: user.uid,
+      username: user.username,
+      agoraId: user.agoraId,
+      isMuted: isMuted,
+      isSpeaking: user.isSpeaking,
+    );
+
+    // Update participants list
+    final index = _participants.indexWhere((p) => p.uid == user.uid);
+    if (index != -1) {
+      _participants[index] = updatedUser;
+      notifyListeners();
     }
+
+    return updatedUser;
   }
 
-  Future<void> _ensureBotInRoom() async {
-    try {
-      final botRef = _firestore
-          .collection('rooms')
-          .doc(roomId)
-          .collection('participants')
-          .doc(_botUser.uid);
 
-      final botDoc = await botRef.get();
+  Future<void> leaveRoom(String roomId, UserModel user) async {
+    await _engine?.leaveChannel();
+    await _firestore
+        .collection('rooms')
+        .doc(roomId)
+        .collection('participants')
+        .doc(user.uid)
+        .delete();
 
-      if (!botDoc.exists) {
-        await botRef.set(_botUser.toMap());
-      }
-    } catch (e) {
-      print('Error ensuring bot in room: $e');
-    }
+    await _updateUserStatus(user.uid, {'lastJoinedRoom': null});
   }
 
-  Future<void> joinRoom(UserModel user) async {
-    try {
-      // Add user to Firestore
-      await _firestore
-          .collection('rooms')
-          .doc(roomId)
-          .collection('participants')
-          .doc(user.uid)
-          .set(user.toMap());
-
-      await _voiceService?.joinChannel(roomId, user.agoraId);
-    } catch (e) {
-      print('Error joining room: $e');
-      rethrow;
-    }
+  Future<void> _updateUserStatus(String uid, Map<String, dynamic> data) async {
+    await _firestore.collection('users').doc(uid).update(data);
   }
 
-  Future<void> leaveRoom(String uid) async {
-    try {
-      // Don't allow removing the bot
-      if (uid == _botUser.uid) return;
 
-      // Remove user from Firestore
-      await _firestore
-          .collection('rooms')
-          .doc(roomId)
-          .collection('participants')
-          .doc(uid)
-          .delete();
-
-      // Leave voice channel
-      await _voiceService?.leaveChannel();
-    } catch (e) {
-      print('Error leaving room: $e');
-      rethrow;
-    }
-  }
-
-  Future<void> toggleMute(String uid) async {
-    try {
-      // Don't allow toggling bot's mute state
-      if (uid == _botUser.uid) return;
-
-      await _voiceService?.toggleMute();
-      await _firestore
-          .collection('rooms')
-          .doc(roomId)
-          .collection('participants')
-          .doc(uid)
-          .update({'isMuted': _voiceService?.isMuted});
-    } catch (e) {
-      print('Error toggling mute: $e');
-      rethrow;
-    }
-  }
-
-  void _handleUserSpeaking(int agoraID, bool isSpeaking) {
-    try {
-      // Add debug logging
-      print(
-          'Handling speaking event - AgoraID: $agoraID, Speaking: $isSpeaking');
-      print(
-          'Current participants: ${_participants.map((p) => '${p.username}: ${p.agoraId}').join(', ')}');
-
-      final user = _participants.firstWhere(
-        (user) => user.agoraId == agoraID, // Remove unnecessary parentheses
-        orElse: () {
-          print('No user found with agoraId: $agoraID');
-          return throw Exception('User not found');
-        },
-      );
-
-      // Don't update bot's speaking state
-      if (user.uid == _botUser.uid) return;
-
-      _firestore
-          .collection('rooms')
-          .doc(roomId)
-          .collection('participants')
-          .doc(user.uid)
-          .update({'isSpeaking': isSpeaking});
-    } catch (e) {
-      print('Error handling user speaking: $e');
-    }
-  }
-
-  @override
-  void dispose() {
-    _voiceService?.dispose();
-    super.dispose();
-  }
 }

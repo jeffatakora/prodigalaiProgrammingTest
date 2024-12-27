@@ -4,101 +4,119 @@ import 'package:multi_user_voice_room/app/model/user.dart';
 import 'package:multi_user_voice_room/app/provider/auth_provider.dart';
 import 'package:multi_user_voice_room/app/provider/room_provider.dart';
 import 'package:multi_user_voice_room/app/screen/login/login.dart';
+import 'package:multi_user_voice_room/app/screen/participant/participant.dart';
 import 'package:provider/provider.dart';
 
-class VoiceRoomScreen extends StatelessWidget {
-  final UserModel currentUser;
+class RoomScreen extends StatefulWidget {
+  const RoomScreen({super.key});
 
-  const VoiceRoomScreen({super.key, required this.currentUser});
+  @override
+  _RoomScreenState createState() => _RoomScreenState();
+}
 
-  void _handleRoomExit(BuildContext context) async {
-    final authProvider = context.read<AuthenticationProvider>();
-    final roomProvider = context.read<RoomProvider>();
+class _RoomScreenState extends State<RoomScreen> {
+  UserModel? currentUser;
+  
+  @override
+  void initState() {
+    super.initState();
+    currentUser = context.read<AuthService>().user;
+    _initializeRoom();
+  }
 
-    // Leave the room first
-    await roomProvider.leaveRoom(currentUser.uid);
+  Future<void> _initializeRoom() async {
+    final roomService = context.read<RoomService>();
+    final user = context.read<AuthService>().user;
 
-    // Sign out the user
-    await authProvider.logout();
-
-    // Navigate to login screen and remove all previous routes
-    if (context.mounted) {
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute<LoginScreen>(
-          builder: (context) => const LoginScreen(),
-        ),
-        (_) => false,
-      );
+    if (user != null) {
+      await roomService.initializeAgora();
+      await roomService.joinRoom(dotenv.env['AGORA_APP_CHANNEL']!, user);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Get the AuthProvider instance
-    return ChangeNotifierProvider(
-      create: (_) =>
-          RoomProvider(dotenv.env['AGORA_APP_CHANNEL']!)..joinRoom(currentUser),
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Voice Room'),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.exit_to_app),
-              onPressed: () => _handleRoomExit(context),
-            ),
-          ],
-        ),
-        body: Consumer<RoomProvider>(
-          builder: (context, provider, child) {
-            if (!provider.isInitialized) {
-              return const Center(child: CircularProgressIndicator());
-            }
+    final user = context.read<AuthService>().user;
 
-            return Column(
-              children: [
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: provider.participants.length,
-                    itemBuilder: (context, index) {
-                      final participant = provider.participants[index];
-                      return ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: participant.isSpeaking
-                              ? Colors.green
-                              : Colors.blue,
-                          child: Text(participant.username[0]),
-                        ),
-                        title: Text(participant.username),
-                        trailing: participant.uid == currentUser.uid
-                            ? IconButton(
-                                icon: Icon(participant.isMuted
-                                    ? Icons.mic_off
-                                    : Icons.mic),
-                                onPressed: () =>
-                                    provider.toggleMute(currentUser.uid),
-                              )
-                            : Icon(participant.isMuted
-                                ? Icons.mic_off
-                                : Icons.mic),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Voice Room'),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.exit_to_app),
+            onPressed: () async {
+              if (user != null) {
+                await context.read<RoomService>().leaveRoom(dotenv.env['AGORA_APP_CHANNEL']!, user);
+                await context.read<AuthService>().signOut();
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                );
+              }
+            },
+          ),
+        ],
+      ),
+      body: Consumer<RoomService>(
+        builder: (context, roomService, _) {
+          return Column(
+            children: [
+              Expanded(
+                child: ListView.builder(
+                  itemCount: roomService.participants.length + 1,
+                  itemBuilder: (context, index) {
+                    if (index == 0) {
+                      return const ParticipantTile(
+                        name: 'Bot',
+                        isSpeaking: false,
+                        isMuted: true,
+                        isBot: true,
+                      );
+                    }
+                    final participant = roomService.participants[index - 1];
+                    return ParticipantTile(
+                      name: participant.username,
+                      isSpeaking: participant.isSpeaking,
+                      isMuted: participant.isMuted,
+                      isBot: false,
+                    );
+                  },
+                ),
+              ),
+              if (user != null)
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Consumer<RoomService>(
+                    builder: (context, roomService, _) {
+                      final participant = roomService.participants.firstWhere(
+                          (p) => p.uid == currentUser?.uid,
+                          orElse: () => currentUser!);
+                      return ElevatedButton.icon(
+                        onPressed: () async {
+                          if (currentUser != null) {
+                            currentUser = await context
+                                .read<RoomService>()
+                                .toggleMute(participant);
+                          }
+                        },
+                        icon: Icon(
+                            participant.isMuted ? Icons.mic_off : Icons.mic),
+                        label: Text(participant.isMuted ? 'Unmute' : 'Mute'),
                       );
                     },
                   ),
-                ),
-                const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Text(
-                    'Bot is monitoring the conversation',
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
+                )
+            ],
+          );
+        },
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    context.read<RoomService>().dispose();
+    super.dispose();
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:multi_user_voice_room/app/provider/auth_provider.dart';
+import 'package:multi_user_voice_room/app/screen/voice_room/voice_room.dart';
 import 'package:provider/provider.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -10,18 +11,24 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _formKey = GlobalKey<FormState>();
+    final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
 
-  Future<void> _handleLogin() async {
+Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
     try {
       // Get the AuthProvider instance
-      final authProvider = context.read<AuthenticationProvider>();
+      final authProvider = context.read<AuthService>();
 
-      final success = await authProvider.login(
+      final success = await authProvider.signInWithUsername(
         _usernameController.text.trim(),
       );
+      if (success) {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (_) => const RoomScreen()),
+                    );
+                  }
 
       if (!success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -43,6 +50,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+
   @override
   void dispose() {
     _usernameController.dispose();
@@ -51,8 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Watch the AuthProvider for changes
-    final authProvider = context.watch<AuthenticationProvider>();
+ final authProvider = context.watch<AuthService>();
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -137,7 +144,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   // Bot Info
                   const SizedBox(height: 24),
                   const Text(
-                    'A bot moderator will be present in the room',
+                    'A bot will be present in the room',
                     style: TextStyle(
                       color: Colors.grey,
                       fontSize: 12,
