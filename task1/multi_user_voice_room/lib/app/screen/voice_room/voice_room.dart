@@ -7,6 +7,7 @@ import 'package:multi_user_voice_room/app/screen/login/login.dart';
 import 'package:multi_user_voice_room/app/screen/participant/participant.dart';
 import 'package:provider/provider.dart';
 
+/// Represents the main screen where the user joins or creates rooms.
 class RoomScreen extends StatefulWidget {
   const RoomScreen({super.key});
 
@@ -15,19 +16,16 @@ class RoomScreen extends StatefulWidget {
 }
 
 class _RoomScreenState extends State<RoomScreen> {
-  UserModel? currentUser;
-  
   @override
   void initState() {
     super.initState();
-    currentUser = context.read<AuthService>().user;
     _initializeRoom();
   }
 
+// Initialize Agora on screen load.
   Future<void> _initializeRoom() async {
     final roomService = context.read<RoomService>();
     final user = context.read<AuthService>().user;
-
     if (user != null) {
       await roomService.initializeAgora();
       await roomService.joinRoom(dotenv.env['AGORA_APP_CHANNEL']!, user);
@@ -39,77 +37,104 @@ class _RoomScreenState extends State<RoomScreen> {
     final user = context.read<AuthService>().user;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Voice Room'),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.exit_to_app),
-            onPressed: () async {
-              if (user != null) {
-                await context.read<RoomService>().leaveRoom(dotenv.env['AGORA_APP_CHANNEL']!, user);
-                await context.read<AuthService>().signOut();
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
-                );
-              }
-            },
-          ),
-        ],
-      ),
-      body: Consumer<RoomService>(
-        builder: (context, roomService, _) {
-          return Column(
-            children: [
-              Expanded(
-                child: ListView.builder(
-                  itemCount: roomService.participants.length + 1,
-                  itemBuilder: (context, index) {
-                    if (index == 0) {
-                      return const ParticipantTile(
-                        name: 'Bot',
-                        isSpeaking: false,
-                        isMuted: true,
-                        isBot: true,
-                      );
-                    }
-                    final participant = roomService.participants[index - 1];
-                    return ParticipantTile(
-                      name: participant.username,
-                      isSpeaking: participant.isSpeaking,
-                      isMuted: participant.isMuted,
-                      isBot: false,
-                    );
-                  },
-                ),
+      backgroundColor: Colors.black,
+      body: SafeArea(
+        child: Consumer<RoomService>(
+          builder: (context, roomService, _) {
+            final allParticipants = [
+              UserModel(
+                uid: 'bot',
+                username: 'Bot Moderator',
+                agoraId: 0,
+                isMuted: true,
+                isSpeaking: false,
               ),
-              if (user != null)
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Consumer<RoomService>(
-                    builder: (context, roomService, _) {
-                      final participant = roomService.participants.firstWhere(
-                          (p) => p.uid == currentUser?.uid,
-                          orElse: () => currentUser!);
-                      return ElevatedButton.icon(
+              ...roomService.participants,
+            ];
+
+            return Column(
+              children: [
+                // App Bar
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  color: Colors.black,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Voice Room',
+                        style: TextStyle(color: Colors.white, fontSize: 20),
+                      ),
+                      IconButton(
+                        icon:
+                            const Icon(Icons.exit_to_app, color: Colors.white),
                         onPressed: () async {
-                          if (currentUser != null) {
-                            currentUser = await context
-                                .read<RoomService>()
-                                .toggleMute(participant);
+                          if (user != null) {
+                            await roomService.leaveRoom(
+                                dotenv.env['AGORA_APP_CHANNEL']!, user);
+                            await context.read<AuthService>().signOut();
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const LoginScreen()),
+                            );
                           }
                         },
-                        icon: Icon(
-                            participant.isMuted ? Icons.mic_off : Icons.mic),
-                        label: Text(participant.isMuted ? 'Unmute' : 'Mute'),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Participants Grid
+                Expanded(
+                  child: GridView.builder(
+                    padding: const EdgeInsets.all(8),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount:
+                          MediaQuery.of(context).size.width > 600 ? 3 : 2,
+                      childAspectRatio: 3 / 4,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
+                    ),
+                    itemCount: allParticipants.length,
+                    itemBuilder: (context, index) {
+                      final participant = allParticipants[index];
+                      return ParticipantCard(
+                        participant: participant,
+                        isCurrentUser: user?.uid == participant.uid,
                       );
                     },
                   ),
-                )
-            ],
-          );
-        },
+                ),
+
+                // Bottom Controls
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  color: Colors.black,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (user != null)
+                        CircleAvatar(
+                          radius: 25,
+                          backgroundColor:
+                              user.isMuted ? Colors.red : Colors.white,
+                          child: IconButton(
+                            icon: Icon(
+                              user.isMuted ? Icons.mic_off : Icons.mic,
+                              color: user.isMuted ? Colors.white : Colors.black,
+                            ),
+                            onPressed: () =>
+                                context.read<RoomService>().toggleMute(user),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

@@ -3,15 +3,22 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:multi_user_voice_room/app/model/user.dart';
 
+/// Manages authentication-related operations and user state.
 class AuthService with ChangeNotifier {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  UserModel? _user;
-  bool _isLoading = false;
+  final FirebaseAuth _auth =
+      FirebaseAuth.instance; // Firebase Authentication instance.
+  final FirebaseFirestore _firestore =
+      FirebaseFirestore.instance; // Firestore instance for database operations.
+  UserModel? _user; // Currently authenticated user.
+  bool _isLoading = false; // Loading state indicator.
 
+  /// Getter for the current authenticated user.
   UserModel? get user => _user;
+
+  /// Getter for the loading state.
   bool get isLoading => _isLoading;
 
+  /// Signs in the user anonymously with a given username and saves the user to Firestore.
   Future<bool> signInWithUsername(String username) async {
     try {
       _isLoading = true;
@@ -39,6 +46,7 @@ class AuthService with ChangeNotifier {
     }
   }
 
+  /// Retrieves the current authenticated user from Firestore.
   Future<UserModel?> getCurrentUser() async {
     final firebaseUser = _auth.currentUser;
     if (firebaseUser != null) {
@@ -52,6 +60,7 @@ class AuthService with ChangeNotifier {
     return null;
   }
 
+/// Signs out the current user and updates the local state.
   Future<void> signOut() async {
     await _auth.signOut();
     _user = null;

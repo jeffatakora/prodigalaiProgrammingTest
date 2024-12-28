@@ -45,9 +45,13 @@ dependencies:
   provider: ^6.1.1
   # provide unique ids
   uuid: ^4.2.1
+  # A Flutter plugin to use the Firebase Core API, which enables connecting to multiple Firebase apps.
   firebase_core: ^3.9.0
+  # To get started with Firebase Auth for Flutter,
   firebase_auth: ^5.3.1
+  # Flutter plugin for Cloud Firestore, a cloud-hosted, noSQL database with live synchronization and offline support on Android and iOS
   cloud_firestore: ^5.4.4
+  # Easily configure any flutter application with global variables using a `.env` file.
   flutter_dotenv: ^5.2.1
   dartdoc: ^8.1.0
 

@@ -6,20 +6,25 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:multi_user_voice_room/app/model/user.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+/// Manages room-related operations including participant management and Agora setup.
 class RoomService with ChangeNotifier {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  RtcEngine? _engine;
-  List<UserModel> _participants = [];
-  String? _currentRoomId;
-  final expirationInSeconds = 3600;
-  final currentTimestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+  final FirebaseFirestore _firestore =
+      FirebaseFirestore.instance; // Firestore instance for database operations.
+  RtcEngine? _engine; // Agora RTC engine instance.
+  List<UserModel> _participants = []; // List of participants in the room.
+  String? _currentRoomId; // ID of the current room.
+  final expirationInSeconds = 3600; // Token expiration time in seconds.
+  final currentTimestamp =
+      DateTime.now().millisecondsSinceEpoch ~/ 1000; // Current timestamp.
 
+  /// Getter for the list of participants in the room.
   List<UserModel> get participants => _participants;
 
+  /// Initializes the Agora RTC engine and sets up event handlers.
   Future<void> initializeAgora() async {
     // Request permissions
     await [Permission.microphone].request();
-    
+
     _engine = createAgoraRtcEngine();
     await _engine!.initialize(RtcEngineContext(
       appId: dotenv.env['AGORA_APP_ID']!,
@@ -37,6 +42,7 @@ class RoomService with ChangeNotifier {
     _setupAgoraEventHandlers();
   }
 
+  /// Sets up Agora RTC event handlers to handle user interactions.
   void _setupAgoraEventHandlers() {
     _engine?.registerEventHandler(RtcEngineEventHandler(
       onJoinChannelSuccess: (connection, elapsed) {
@@ -57,6 +63,7 @@ class RoomService with ChangeNotifier {
     ));
   }
 
+  /// Updates the speaking status of a user in the room.
   Future<void> _updateUserSpeaking(int agoraId, bool isSpeaking) async {
     final participant = _participants.firstWhere(
       (p) => p.agoraId == agoraId,
@@ -65,6 +72,7 @@ class RoomService with ChangeNotifier {
     await updateUserSpeakingStatus(participant.uid, isSpeaking);
   }
 
+  /// Listens for changes in room participants from Firestore.
   void _listenToParticipants(String roomId) {
     _firestore
         .collection('rooms')
@@ -78,6 +86,7 @@ class RoomService with ChangeNotifier {
     });
   }
 
+  /// Joins a room and updates the participant list in Firestore.
   Future<void> joinRoom(String roomId, UserModel user) async {
     _currentRoomId = roomId;
     final expireTimestamp = currentTimestamp + expirationInSeconds;
@@ -110,6 +119,7 @@ class RoomService with ChangeNotifier {
     _listenToParticipants(roomId);
   }
 
+  /// Updates a user's speaking status in Firestore.
   Future<void> updateUserSpeakingStatus(String userId, bool isSpeaking) async {
     await _firestore
         .collection('rooms')
@@ -119,37 +129,34 @@ class RoomService with ChangeNotifier {
         .update({'isSpeaking': isSpeaking});
   }
 
-Future<UserModel> toggleMute(UserModel user) async {
+  /// Toggles the mute status of a user and updates Firestore and the local state.
+  Future<void> toggleMute(UserModel user) async {
     final isMuted = !user.isMuted;
     await _engine?.muteLocalAudioStream(isMuted);
-    
+
+    user.isMuted = isMuted;
+
     // Update Firestore
-    await _firestore.collection('rooms')
-      .doc(_currentRoomId)
-      .collection('participants')
-      .doc(user.uid)
-      .update({'isMuted': isMuted});
+    await _firestore
+        .collection('rooms')
+        .doc(_currentRoomId)
+        .collection('participants')
+        .doc(user.uid)
+        .update({'isMuted': isMuted});
 
-    // Update local user state
-    final updatedUser = UserModel(
-      uid: user.uid,
-      username: user.username,
-      agoraId: user.agoraId,
-      isMuted: isMuted,
-      isSpeaking: user.isSpeaking,
-    );
+    // Force UI update
+    final updatedParticipants = _participants.map((p) {
+      if (p.uid == user.uid) {
+        p.isMuted = isMuted;
+      }
+      return p;
+    }).toList();
 
-    // Update participants list
-    final index = _participants.indexWhere((p) => p.uid == user.uid);
-    if (index != -1) {
-      _participants[index] = updatedUser;
-      notifyListeners();
-    }
-
-    return updatedUser;
+    _participants = updatedParticipants;
+    notifyListeners();
   }
 
-
+  /// Leaves the room and updates the user's room status in Firestore.
   Future<void> leaveRoom(String roomId, UserModel user) async {
     await _engine?.leaveChannel();
     await _firestore
@@ -162,9 +169,8 @@ Future<UserModel> toggleMute(UserModel user) async {
     await _updateUserStatus(user.uid, {'lastJoinedRoom': null});
   }
 
+  /// Updates the user's status in Firestore with given data.
   Future<void> _updateUserStatus(String uid, Map<String, dynamic> data) async {
     await _firestore.collection('users').doc(uid).update(data);
   }
-
-
 }

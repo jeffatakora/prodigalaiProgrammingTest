@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:multi_user_voice_room/app/provider/auth_provider.dart';
 import 'package:multi_user_voice_room/app/screen/voice_room/voice_room.dart';
+import 'package:multi_user_voice_room/app/utils/utils.dart';
 import 'package:provider/provider.dart';
 
+/// Represents the login screen for user authentication.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -11,10 +13,10 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-    final _formKey = GlobalKey<FormState>();
+  final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
 
-Future<void> _handleLogin() async {
+  Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
     try {
       // Get the AuthProvider instance
@@ -24,11 +26,11 @@ Future<void> _handleLogin() async {
         _usernameController.text.trim(),
       );
       if (success) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (_) => const RoomScreen()),
-                    );
-                  }
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const RoomScreen()),
+        );
+      }
 
       if (!success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -50,16 +52,28 @@ Future<void> _handleLogin() async {
     }
   }
 
-
   @override
   void dispose() {
+    initializeServices();
     _usernameController.dispose();
     super.dispose();
   }
 
+  Future<void> initializeServices() async {
+    // Initialize STT with permissions
+    bool permissionGranted = await Utils.requestMicrophonePermission();
+    if (!permissionGranted) {
+      Utils.showErrorDialog(
+          // ignore: use_build_context_synchronously
+          context,
+          'Permission Denied',
+          'Microphone permission is required.');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
- final authProvider = context.watch<AuthService>();
+    final authProvider = context.watch<AuthService>();
     return Scaffold(
       body: SafeArea(
         child: Center(
